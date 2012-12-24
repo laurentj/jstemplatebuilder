@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+
+<jstemplate
+    version="1.0"
+    xmlns="http://disruptive-innovations.com/ns/jstemplate"
+    xmlns:jstpl="http://disruptive-innovations.com/ns/jstemplate"
+    xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+>
+    <!-- add a description tag with a text node. its value is from an internal data called "message" -->
+    <xul:description>
+        <text value="message" />
+    </xul:description>
+
+    <!-- add a description tag with a "value" attribute.
+    its value is from the second item of an array stored into an internal data called "othermessage"
+    -->
+    <xul:description jstpl:attribute="value=othermessage[1];" />
+
+    <!-- same example, with two attribute -->
+    <xul:description>
+        <attribute name="value" value="othermessage[0]" />
+        <attribute name="disabled" value="desactive" />
+    </xul:description>
+
+    <!-- example of a simple if statement
+    "firsttest" could be the name of an internal or global variable.
+    -->
+    <if condition="firsttest == 0">
+        <xul:description value="firsttest is equal to 0" />
+    </if>
+
+    <!-- another if statement with an "else" statement -->
+    <if condition="message.length &gt; 0">
+        <iftrue>
+            <xul:button label="there is a message" />
+        </iftrue>
+        <iffalse>
+            <xul:button label="there isn't message" />
+        </iffalse>
+    </if>
+
+    <!-- example of foreach statement. It generate a grid XUL tag from
+    a javascript array stored into an internal/global variable "firstname"
+    each element will be stored into an internal variable called "aLabel"
+    and its key into an internal variable called "aKey". then this variables
+    can be used into the statement, for example, here, to generate some
+    attribute.
+    -->
+    <xul:grid>
+       <xul:columns >
+         <xul:column />
+         <xul:column />
+       </xul:columns>
+       <xul:rows>
+    <foreach from="firstname" item="aLabel" key="aKey">
+        <xul:row>
+            <xul:description jstpl:attribute="value=aLabel" />
+            <xul:description jstpl:attribute="value=aKey" />
+        </xul:row>
+    </foreach>
+      </xul:rows>
+    </xul:grid>
+
+</jstemplate>

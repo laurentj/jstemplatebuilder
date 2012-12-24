@@ -1,0 +1,242 @@
+jsTemplateBuilder 1.2 Documentation
+===================================
+
+What is jsTemplateBuilder ?
+----------------------------
+
+jsTemplateBuilder could generate content (XUL in particulary) from a template file and
+javascript datas. The generated content will be inserted into a document.
+
+So you give to the template builder :
+- a template file that contents tags to generate and some instructions to the template engine
+- some datas that are assigned to internal variables, which will be used by the template engine. this
+ datas may be some values to insert into attribute, some arrays/objects from which the template
+ engine will iterate etc..
+
+Template format
+---------------
+
+The template file is an xml file. Here is a minimum version :
+
+<?xml version="1.0"?>
+<jstemplate
+    version="1.0"
+    xmlns="http://disruptive-innovations.com/ns/jstemplate"
+    xmlns:jstpl="http://disruptive-innovations.com/ns/jstemplate"
+    xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+>
+
+</jstemplate>
+
+In this file, you'll insert some tags that will be generated (XUL tags or other format),
+and some specific tags that represent statements for the template engine.
+
+Template tag language
+---------------------
+
+legend :
+   exprvar : replace it by the name of an internal data  or a javascript expression
+   var : replace it by the name of an internal data
+   expression : replace it by a simple javascript expression
+   string : some simple text
+
+Javascript expression can be reference to some internal data of course
+
+
+<text value="exprvar" />
+   insert into the generated content a text node with the value of exprvar
+
+<attribute name="string" value="exprvar" />
+   add an attribute "string" to the last generated tag.
+
+<if condition="expression"> ...</if>
+   Simple if statement.
+   If you want to have an if..then..else statement, use <iftrue> and <iffalse> tags as child.
+
+   <if condition="expression">
+      <iftrue>...content generated if the expression result is true...</iftrue>
+      <iffalse>...content generated if the expression result is false...</iffalse>
+   </if>
+
+<foreach from="var1" item="var2" key="var3"> ...</foreach>
+   foreach statement. It generate content for each item or properties of the "var1"
+   internal variable (array or object). Each item or property value will be put
+   into var2 internal variable, and its key/name will be put into var3 internal variable
+
+
+<assign name="var" value="exprvar" />
+  create/modify an internal variable. its name is 'var' and its value is exprvar.
+
+<debug show="exprvar" label="string" />
+   dump the value exprvar to the console, and/or a simple string (the label attribute)
+   Used to debug.
+
+
+You have also an attribute that you can use into tags that will be generated.
+Exemple :
+
+<xul:tag jstpl:attribute="attr=exprvar" />
+
+It add an "attr" attribute (replace "attr" by that you want) to the xul tag "tag", with the
+"exprvar" value.
+If you want add more attributes, use <attribute> tag.
+
+
+
+Example of a template file
+--------------------------
+
+
+<?xml version="1.0"?>
+<jstemplate
+    version="1.0"
+    xmlns="http://disruptive-innovations.com/ns/jstemplate"
+    xmlns:jstpl="http://disruptive-innovations.com/ns/jstemplate"
+    xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+>
+    <!-- add a description tag with a text node. its value is from an internal data called "message" -->
+    <xul:description>
+        <text value="message" />
+    </xul:description>
+
+    <!-- add a description tag with a "value" attribute.
+    its value is from the second item of an array stored into an internal data called "othermessage"
+    -->
+    <xul:description jstpl:attribute="value=othermessage[1];" />
+
+    <!-- same example, with two attribute -->
+    <xul:description>
+        <attribute name="value" value="othermessage[0]" />
+        <attribute name="disabled" value="desactive" />
+    </xul:description>
+
+    <!-- example of a simple if statement
+    "firsttest" could be the name of an internal or global variable.
+    -->
+    <if condition="firsttest == 0">
+        <xul:description value="firsttest is equal to 0" />
+    </if>
+
+    <!-- another if statement with an "else" statement -->
+    <if condition="message.length &gt; 0">
+        <iftrue>
+            <xul:button label="there is a message" />
+        </iftrue>
+        <iffalse>
+            <xul:button label="there isn't message" />
+        </iffalse>
+    </if>
+
+    <!-- example of foreach statement. It generate a grid XUL tag from
+    a javascript array stored into an internal/global variable "firstname"
+    each element will be stored into an internal variable called "aLabel"
+    and its key into an internal variable called "aKey". then this variables
+    can be used into the statement, for example, here, to generate some
+    attribute.
+    -->
+    <xul:grid>
+       <xul:columns >
+         <xul:column />
+         <xul:column />
+       </xul:columns>
+       <xul:rows>
+    <foreach from="firstname" item="aLabel" key="aKey">
+        <xul:row>
+            <xul:description jstpl:attribute="value=aLabel" />
+            <xul:description jstpl:attribute="value=aKey" />
+        </xul:row>
+    </foreach>
+      </xul:rows>
+    </xul:grid>
+
+</jstemplate>
+
+
+Using jsTemplateBuilder in javascript
+-------------------------------------
+
+After you have written your template file, you can generate content with
+jsTemplateBuilder object.
+
+// get an instance of the template engine
+  var jstpl = new jsTemplateBuilder();
+
+// create some internal variable
+  jstpl.assign('message','Bonjour !');
+  jstpl.assign('othermessage', ['lorem','ispum','dolor']);
+  jstpl.assign('firsttest',0);
+  jstpl.assign('desactive','true');
+  jstpl.assign('firstname', ['Laurent','Daniel','Tristan']);
+
+
+// an other way to create some internal variable : you can have an object with some properties
+that will be the internal variables :
+
+ var datas = {
+  message:'Bonjour !',
+  othermessage: ['lorem','ispum','dolor'],
+  firsttest:0,
+  desactive:'true',
+  firstname : ['Laurent','Daniel','Tristan'],
+ }
+
+ // and give this object during the instanciation
+ var jstpl = new jsTemplateBuilder(datas);
+
+// Then you can generate content using the "build" method
+  jstpl.build( letemplate , element , vider);
+
+ /*
+  letemplate = the url of the template file
+  element = the id of the element where the generated content will be insert into.
+       you can also give directly the element
+  vider = a boolean to indicate if you want to remove all children elements of "element"
+
+  example :
+ */
+
+  jstpl.build( 'mytemplate.jstpl' , "myBox" , true);
+ // or
+  var elt=document.getElementById('myBox');
+  jstpl.build( 'mytemplate.jstpl' , elt , true);
+
+
+Example of result
+-----------------
+With our example, the generated content will be
+
+    <xul:description>Bonjour !</xul:description>
+
+    <xul:description value="ipsum" />
+
+    <xul:description value="lorem" disabled="true" />
+
+    <xul:description value="firsttest is equal to 0" />
+
+    <xul:button label="there is a message" />
+
+    <xul:grid>
+       <xul:columns >
+         <xul:column />
+         <xul:column />
+       </xul:columns>
+       <xul:rows>
+        <xul:row>
+            <xul:description value="Laurent" />
+            <xul:description value="0" />
+        </xul:row>
+        <xul:row>
+            <xul:description value="Daniel" />
+            <xul:description value="1" />
+        </xul:row>
+        <xul:row>
+            <xul:description value="Tristan" />
+            <xul:description value="2" />
+        </xul:row>
+      </xul:rows>
+    </xul:grid>
+
+
+
+
+

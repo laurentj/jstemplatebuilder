@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+
+<jstemplate
+    version="1.0"
+    xmlns="http://disruptive-innovations.com/ns/jstemplate"
+    xmlns:jstpl="http://disruptive-innovations.com/ns/jstemplate"
+    xmlns:html="http://www.w3.org/1999/xhtml"
+>
+    <!-- add a description tag with a text node. its value is from an internal data called "message" -->
+    <html:p>
+        <text value="message" />
+    </html:p>
+
+    <!-- add a description tag with a "value" attribute.
+    its value is from the second item of an array stored into an internal data called "othermessage"
+    -->
+    <html:input type="text" jstpl:attribute="value=othermessage[1];" />
+
+    <!-- same example, with two attribute -->
+    <html:input type="text">
+        <attribute name="value" value="othermessage[0]" />
+        <attribute name="disabled" value="desactive" />
+    </html:input>
+
+    <!-- example of a simple if statement
+    "firsttest" could be the name of an internal or global variable.
+    -->
+    <if condition="firsttest == 0">
+        <html:p value="firsttest is equal to 0" />
+    </if>
+
+    <!-- another if statement with an "else" statement -->
+    <if condition="message.length &gt; 0">
+        <iftrue>
+            <html:input type="text"  value="there is a message" />
+        </iftrue>
+        <iffalse>
+            <html:input type="text"  value="there isn't message" />
+        </iffalse>
+    </if>
+
+    <html:table border="1">
+    <foreach from="firstname" item="aLabel" key="aKey">
+        <html:tr>
+            <html:td><text value="aLabel" /></html:td>
+            <html:td><text value="aKey" /></html:td>
+        </html:tr>
+    </foreach>
+      </html:table>
+
+</jstemplate>

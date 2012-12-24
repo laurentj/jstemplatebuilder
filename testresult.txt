@@ -1,0 +1,30 @@
+    <xul:description>Bonjour !</xul:description>
+
+    <xul:description value="ipsum" />
+
+    <xul:description value="lorem" disabled="true" />
+
+    <xul:description value="firsttest is equal to 0" />
+
+    <xul:button label="there is a message" />
+
+    <xul:grid>
+       <xul:columns >
+         <xul:column />
+         <xul:column />
+       </xul:columns>
+       <xul:rows>
+        <xul:row>
+            <xul:description value="Laurent" />
+            <xul:description value="0" />
+        </xul:row>
+        <xul:row>
+            <xul:description value="Daniel" />
+            <xul:description value="1" />
+        </xul:row>
+        <xul:row>
+            <xul:description value="Tristan" />
+            <xul:description value="2" />
+        </xul:row>
+      </xul:rows>
+    </xul:grid>

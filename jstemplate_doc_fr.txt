@@ -1,0 +1,172 @@
+Documentation de jstemplatebuilder
+==================================
+
+Principes
+---------
+
+jstemplatebuilder permet de générer du code XML (HTML ou XUL par exemple), intégré où l'on veut,
+à partir d'un fichier gabarit.
+La génération est conditionnée par les valeurs de variables javascript.
+
+
+Format du  fichier de template
+-------------------------------
+
+Le fichier est en xml. Le minimum est :
+
+<?xml version="1.0"?>
+<jstemplate
+    version="1.0"
+    xmlns="http://disruptive-innovations.com/ns/jstemplate"
+    xmlns:jstpl="http://disruptive-innovations.com/ns/jstemplate"
+    xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+>
+
+</jstemplate>
+
+
+Voici les balises spécifiques à jstemplatebuilder qui vont conditionner la génération.
+Légende :
+	exprvar  est à remplacer par un nom de variable javascript ou du code javascript
+	var est à remplacer par un nom de variable
+	expression doit être une expression javascript renvoyant vrai/faux
+	string est à remplacer par du simple texte
+
+<text value="exprvar" />
+   insert le contenu renvoyé par exprvar (génère un node xml de type texte)
+
+<attribut name="attr" value="exprvar" />
+  ajoute l'attribut "attr" avec la valeur renvoyée par exprvar, à la balise parente générée.
+
+<if condition="expression"> ...</if>
+   insère les balises filles si l'expression est vérifiée
+
+   à l'interieur du if, on peut aussi avoir deux balises spécifiques
+    <iftrue> .. </iftrue>
+       contenu à inserer si l'expression est vraie
+    <iffalse>...</iffalse>
+       contenu à inserer si l'expression est fausse
+
+<foreach from="var1" item="var2" key="var3"> ...</foreach>
+  parcourt le tableau/objet javascript var1. pour chaque occurence, met sa valeur
+  dans var2 et sa clé dans var3 (clé = indice ou nom de propriete), et génère le code inclus
+  dans <foreach>.
+
+<assign name="var" value="exprvar" />
+  créer/modifie une variable dans le moteur de template, avec le nom var et la valeur exprvar
+
+<debug show="exprvar" label="string" />
+   affiche un dump de exprvar et/ou une chaine "string" dans la console
+
+
+Il existe aussi un attribut jstemplate à indiquer dans les balises à générer :
+
+<xul:tag jstpl:attribut="attr=exprvar" />
+
+ajoute l'attribut "attr" avec la valeur  de "exprvar" dans le tag. Si vous voulez modifier plusieurs
+attributs, utilisez la balise jstpl <attribut /> (cf plus haut)
+
+
+exemple de fichier template
+----------------------------
+
+
+<?xml version="1.0"?>
+<jstemplate
+    version="1.0"
+    xmlns="http://disruptive-innovations.com/ns/jstemplate"
+    xmlns:jstpl="http://disruptive-innovations.com/ns/jstemplate"
+    xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+>
+    <!-- ajoute une balise description contenant le texte provenant de la variable message -->
+    <xul:description>
+        <text value="message" />
+    </xul:description>
+
+    <!-- génère une balise description avec un attribut value ayant la valeur de autremessage[1]; -->
+    <xul:description jstpl:attribut="value=autremessage[1];" />
+
+    <!-- génère une balise description avec les attributs value et disabled indiqué -->
+    <xul:description>
+        <attribut name="value" valuefrom="autremessage[0]" />
+        <attribut name="disabled" valuefrom="desactive" />
+    </xul:description>
+
+    <!-- exemple de test simple -->
+    <if condition="premiertest == 0">
+        <xul:description value="premiertest est à 0" />
+    </if>
+
+    <!-- exemple de test avec un "else" -->
+    <if condition="message.length > 0">
+        <iftrue>
+            <xul:button label="ya message" />
+        </iftrue>
+        <iffalse>
+            <xul:button label="ya pas message" />
+        </iffalse>
+    </if>
+
+    <!-- exemple de génération d'une grille avec parcours d'un tableau javascript -->
+    <xul:grid>
+       <xul:columns >
+         <xul:column />
+         <xul:column />
+       </xul:columns>
+       <xul:rows>
+    <foreach from="prenoms" item="libelle" key="cle">
+        <xul:row>
+            <xul:description jstpl:attribut="value=libelle" />
+            <xul:description jstpl:attribut="value=cle" />
+        </xul:row>
+    </foreach>
+      </xul:rows>
+    </xul:grid>
+
+</jstemplate>
+
+
+Appel en javascript
+--------------------
+
+Pour la génération du template, il faut faire appel à l'objet jsTemplateBuilder
+
+// instanciation
+  var jstpl = new jsTemplateBuilder();
+
+// creation des variables javascript utilisées dans le template
+  jstpl.assign('message','Bonjour !');
+  jstpl.assign('autremessage', ['lorem','ispum','dolor']);
+  jstpl.assign('premiertest',0);
+  jstpl.assign('desactive','true');
+  jstpl.assign('prenoms', ['Laurent','Daniel','Tristan']);
+
+
+//  on peut aussi donner directement un objet au lieu de faire des assigns:
+
+ var datas = {
+  message:'Bonjour !',
+  autremessage: ['lorem','ispum','dolor'],
+  premiertest:0,
+  desactive:'true',
+  prenoms : ['Laurent','Daniel','Tristan'],
+ }
+
+ var jstpl = new jsTemplateBuilder(datas);
+
+// ensuite on peut demander la génération des éléments :
+  jstpl.build( letemplate , element , vider);
+
+ /*
+  letemplate = le nom du fichier contenant le nom du template (chemin relatif au fichier de la fenêtre)
+  element = id de l'element dans lequel on insère les balises générées. peut être aussi directement un objet DOM
+  vider = boolean indiquant si on supprime les fils de element avant insertion
+ */
+  jstpl.build( 'motemplate.jstpl' , "maboite" , true);
+ // ou
+  var elt=document.getElementById('toto');
+  jstpl.build( 'motemplate.jstpl' , elt , true);
+
+
+
+
